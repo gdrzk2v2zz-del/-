@@ -1,0 +1,46 @@
+import discord
+from discord.ext import commands
+
+intents = discord.Intents.default()
+intents.message_content = True
+intents.voice_states = True
+intents.members = True
+
+bot = commands.Bot(command_prefix="!", intents=intents)
+
+# あなたの環境のチャンネルID
+TARGET_VC_ID = 1434447254735032353                   # VC
+SOURCE_TEXT_CHANNEL_ID = 1434447254735032352         # 監視するテキスト
+TARGET_TEXT_CHANNEL_ID = 1442449125550592081         # 転送先テキスト
+
+def is_in_target_vc(member: discord.Member):
+    """ユーザーが指定VCにいるか確認"""
+    return (
+        member.voice 
+        and member.voice.channel 
+        and member.voice.channel.id == TARGET_VC_ID
+    )
+
+@bot.event
+async def on_message(message: discord.Message):
+    # Bot 自身の発言は無視
+    if message.author.bot:
+        return
+
+    # 発言チャンネルが監視対象でない場合は無視
+    if message.channel.id != SOURCE_TEXT_CHANNEL_ID:
+        return
+
+    # VC に参加していないユーザーは無視
+    if not is_in_target_vc(message.author):
+        return
+
+    # メッセージを転送
+    target_channel = bot.get_channel(TARGET_TEXT_CHANNEL_ID)
+    if target_channel:
+        await target_channel.send(
+            f"📨 **{message.author.display_name}**: {message.content}"
+        )
+
+# Bot トークンを入れてください
+bot.run("1442439044863758337")
