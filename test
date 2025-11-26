@@ -1,0 +1,48 @@
+const { Client, GatewayIntentBits } = require("discord.js");
+const express = require("express");
+
+const app = express();
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildVoiceStates,
+    GatewayIntentBits.GuildMembers
+  ]
+});
+
+// ===== ID設定 =====
+const VC_CHANNEL_ID = "1434447254735032353";
+const WATCH_TEXT_CHANNEL_ID = "1434447254735032352";
+const TARGET_TEXT_CHANNEL_ID = "1442449125550592081";
+
+// ===== Webサーバー（生存用）=====
+app.get("/", (_, res) => {
+  res.send("Bot is alive!");
+});
+
+app.listen(3000, () => {
+  console.log("Web alive");
+});
+
+// ===== Bot起動 =====
+client.once("ready", () => {
+  console.log(`Logged in as ${client.user.tag}`);
+});
+
+client.on("messageCreate", async (message) => {
+  if (message.author.bot || !message.guild) return;
+  if (message.channel.id !== WATCH_TEXT_CHANNEL_ID) return;
+
+  const member = message.guild.members.cache.get(message.author.id);
+  if (!member?.voice?.channel) return;
+  if (member.voice.channel.id !== VC_CHANNEL_ID) return;
+
+  const target = message.guild.channels.cache.get(TARGET_TEXT_CHANNEL_ID);
+  if (!target) return;
+
+  target.send(`🎤 **${member.displayName}**\n${message.content}`);
+});
+
+client.login(process.env.TOKEN);
