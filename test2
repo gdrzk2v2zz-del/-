@@ -1,0 +1,51 @@
+const { Client, GatewayIntentBits } = require("discord.js");
+const http = require("http");
+
+// ===== Discord Client =====
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildVoiceStates,
+    GatewayIntentBits.GuildMembers,
+  ],
+});
+
+// ===== 設定 =====
+const VC_CHANNEL_ID = "1434447254735032353";
+const WATCH_TEXT_CHANNEL_ID = "1434447254735032352";
+const TARGET_TEXT_CHANNEL_ID = "1442449125550592081";
+
+// ===== ダミーHTTP（Northflank Health Check用）=====
+http.createServer((req, res) => {
+  res.writeHead(200);
+  res.end("Bot running");
+}).listen(process.env.PORT || 3000);
+
+// ===== 起動確認 =====
+client.once("ready", () => {
+  console.log(`✅ Logged in as ${client.user.tag}`);
+});
+
+// ===== メッセージ監視 =====
+client.on("messageCreate", async (message) => {
+  if (message.author.bot || !message.guild) return;
+  if (message.channel.id !== WATCH_TEXT_CHANNEL_ID) return;
+
+  const member = message.guild.members.cache.get(message.author.id);
+  if (!member?.voice?.channel) return;
+  if (member.voice.channel.id !== VC_CHANNEL_ID) return;
+
+  const targetChannel = message.guild.channels.cache.get(TARGET_TEXT_CHANNEL_ID);
+  if (!targetChannel) return;
+
+  targetChannel.send({
+    content: `🎤 **${member.displayName}**\n${message.content}`,
+  });
+});
+
+// ===== ログイン =====
+client.login(process.env.TOKEN);
+
+BOT_TOKEN = < 1442439044863758337 >
